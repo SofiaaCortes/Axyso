@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJs'   // Nombre EXACTO de la instalación en Manage Jenkins > Tools
+        nodejs 'Node_24'   // Nombre EXACTO de la instalación en Manage Jenkins > Tools
     }
 
     environment {
