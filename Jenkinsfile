@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         nodejs 'Node_24'   // Nombre EXACTO de la instalación en Manage Jenkins > Tools
-        sonarScanner 'SonarQubeScanner' // Configurado en Global Tools
+        sonarScanner 'MySonarQube' // Configurado en Global Tools
     }
 
     environment {
