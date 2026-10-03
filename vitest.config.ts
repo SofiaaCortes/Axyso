@@ -10,5 +10,11 @@ export default defineConfig({
     outputFile: {
       junit: './test-results/junit.xml',
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage',
+      exclude: ['node_modules', '.next', '**/*.test.ts'],
+    },
   },
 })
