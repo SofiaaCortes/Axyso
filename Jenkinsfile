@@ -29,7 +29,46 @@ pipeline {
             }
         }
 
-        // Etapa 3: Ejecutar pruebas unitarias (Vitest) con cobertura y publicar reporte JUnit
+        // Etapa 3: Escaneo de seguridad con Snyk (después del build, antes de tests/deploy)
+        stage('Security Scan with Snyk') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'SNYK_API_TOKEN', variable: 'SNYK_TOKEN')]) {
+                        try {
+                            // 1. Instalar Snyk CLI
+                            sh 'npm install -g snyk'
+                            // 2. Autenticación
+                            sh 'snyk auth ${SNYK_TOKEN}'
+                            // 3. Test de vulnerabilidades (fail-on si hay altas/críticas)
+                            sh 'snyk test --all-projects --severity-threshold=high'
+                            // 4. Monitoreo continuo (opcional)
+                            sh 'snyk monitor --all-projects'
+                            // 5. Generar reporte HTML (opcional)
+                            sh 'snyk test --all-projects --json-file-output=snyk_results.json'
+                            sh '''
+                                npm install -g snyk-to-html
+                                snyk-to-html -i snyk_results.json -o snyk_report.html
+                            '''
+                            // Publicar reporte Snyk
+                            publishHTML target: [
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: '.',
+                                reportFiles: 'snyk_report.html',
+                                reportName: 'Snyk Security Report'
+                            ]
+                        } catch (err) {
+                            echo "Snyk scan failed: ${err}"
+                            // Marcar build como inestable si hay vulnerabilidades
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
+                }
+            }
+        }
+
+        // Etapa 4: Ejecutar pruebas unitarias (Vitest) con cobertura y publicar reporte JUnit
         stage('Unit Tests') {
             steps {
                 sh 'npm run test:coverage'
@@ -42,7 +81,7 @@ pipeline {
             }
         }
 
-        // Etapa 4: Análisis de SonarQube (después de tests para incluir cobertura)
+        // Etapa 5: Análisis de SonarQube (después de tests para incluir cobertura)
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
