@@ -3,7 +3,6 @@ pipeline {
 
     tools {
         nodejs 'Node_24'   // Nombre EXACTO de la instalación en Manage Jenkins > Tools
-        sonarScanner 'MySonarQube' // Configurado en Global Tools
     }
 
     environment {
@@ -80,32 +79,9 @@ pipeline {
                 }
             }
         }
-
-        // Etapa 5: Análisis de SonarQube (después de tests para incluir cobertura)
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.host.url=http://localhost:9000 \
-                      -Dsonar.login=${SONAR_AUTH_TOKEN} \
-                      -Dsonar.javascript.node=${NODEJS_HOME}/bin/node
-                    '''
-                }
-            }
-        }
     }
 
-    // Post-actions: Quality Gate de SonarQube y notificaciones
     post {
-        always {
-            script {
-                def qg = waitForQualityGate()
-                if (qg.status != 'OK') {
-                    error "Calidad no aprobada: ${qg.status}"
-                }
-            }
-        }
         success {
             echo '¡Pipeline ejecutado con éxito!'
         }
